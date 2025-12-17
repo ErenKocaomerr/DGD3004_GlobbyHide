@@ -1,0 +1,23 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ad6558d51afcacd43a257f62ae1d0553, type: 3}
+  m_Name: DialogueData
+  m_EditorClassIdentifier: 
+  lines:
+  - speaker: Villeger Man.
+    text: "I heard voices again tonight. That... thing was in\_the\_garden."
+    leftSide: 0
+    portrait: {fileID: 0}
+  - speaker: Villager Woman
+    text: "I can't stand it anymore. The kids can't sleep because of\_the\_noise."
+    leftSide: 1
+    portrait: {fileID: 0}
