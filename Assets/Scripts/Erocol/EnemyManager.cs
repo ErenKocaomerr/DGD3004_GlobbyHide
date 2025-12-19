@@ -96,12 +96,14 @@ public class EnemyManager : MonoBehaviour
 
         succesPanel.SetActive(true);
         audioSource.enabled = false;
+        GameManager.instance.UnlockAbility("DoubleJump");
         Time.timeScale = 0f;
     }
 
     public void TurnTown() 
     {
-        EndManager.Instance.value++;
-        SceneManager.LoadScene("TownScene");
+        Time.timeScale = 1f;
+        GameManager.instance.isReturningToHub = true;
+        SceneManager.LoadScene("NewHub");
     }
 }

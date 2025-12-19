@@ -1,14 +1,20 @@
 using System.Collections;
 using UnityEngine;
+using UnityEngine.InputSystem;
+using UnityEngine.SceneManagement;
 
 [RequireComponent(typeof(Rigidbody2D))]
 public class AdvancedPlayerController : MonoBehaviour
 {
+    // --- NEW INPUT SYSTEM DEĞİŞKENLERİ ---
+    private InputSystem_Actions inputActions;
+    private Vector2 moveInput; // Yatay ve Dikey girdiyi burada tutacağız
+
     [Header("--- Temel Hareket ---")]
     public float moveSpeed = 10f;
-    public float acceleration = 10f; // Daha tepkisel olması için artırdım
-    public float decceleration = 10f; // Durma yumuşaklığı
-    public float velPower = 0.96f; // Hızlanma eğrisi
+    public float acceleration = 10f;
+    public float decceleration = 10f;
+    public float velPower = 0.96f;
     [Range(0, 1)] public float airControl = 0.7f;
 
     public PlayerJuice playerJuice;
@@ -22,29 +28,31 @@ public class AdvancedPlayerController : MonoBehaviour
     public float coyoteTime = 0.1f;
     public float jumpBufferTime = 0.1f;
 
+    public bool unlockDoubleJump = false; // Özelliği aç/kapa
+    private bool canDoubleJump; // Hakkımız var mı?
+
     [Header("--- Duvar Mekanikleri (Hollow Knight) ---")]
     public float wallSlideSpeed = 2.5f;
-    // Duvar zıplaması: X duvardan itme gücü, Y yukarı itme gücü
     public Vector2 wallJumpPower = new Vector2(15f, 22f);
-    public float wallJumpStopControlTime = 0.15f; // Oyuncunun kontrolünü kısa süre al
+    public float wallJumpStopControlTime = 0.15f;
 
     [Header("--- Celeste Style Dash ---")]
     public float dashSpeed = 30f;
-    public float dashDuration = 0.15f; // Celeste dash'i çok kısadır
+    public float dashDuration = 0.15f;
     public float dashCooldown = 0.5f;
-    private Vector2 dashDir; // Dash atılacak yön
+    private Vector2 dashDir;
 
     [Header("--- Gizlilik (Stealth) ---")]
-    public float maxStealthTime = 3f; // Max görünmezlik süresi
-    public float stealthRefillRate = 1f; // Dolma hızı
-    [Range(0, 1)]
-    public float stealthAlpha = 0.3f;
+    public float maxStealthTime = 3f;
+    public float stealthRefillRate = 1f;
+    [Range(0, 1)] public float stealthAlpha = 0.3f;
     public string defaultLayer = "Player";
     public string stealthLayer = "Stealth";
-    public float minStealthToReactivate = 1f; // Flicker önleyici limit
-    private bool isStealthExhausted = false; // Enerji bitti mi?
+    public float minStealthToReactivate = 1f;
+    private bool isStealthExhausted = false;
 
     public bool IsHidden { get; private set; }
+    public bool IsGrounded => isGrounded;
 
     [Header("--- Kontroller (Checks) ---")]
     public Transform groundCheck;
@@ -52,13 +60,12 @@ public class AdvancedPlayerController : MonoBehaviour
     public Transform wallCheck;
     public float wallCheckDistance = 0.5f;
     public LayerMask groundLayer;
-    public bool unlockDash = false;    
+    public bool unlockDash = false;
     public bool unlockWallJump = false;
 
     // Internal Variables
     private Rigidbody2D rb;
-    private float horizontalInput;
-    private float verticalInput; // Celeste dash için dikey input lazım
+    // horizontalInput ve verticalInput ARTIK YOK (moveInput kullanacağız)
     private bool isFacingRight = true;
 
     // States
@@ -67,7 +74,7 @@ public class AdvancedPlayerController : MonoBehaviour
     private bool isWallSliding;
     private bool isDashing;
     private bool canDash = true;
-    private bool isControlLocked = false; // WallJump sonrası kontrolü kitlemek için
+    private bool isControlLocked = false;
 
     // Timers
     private float coyoteTimeCounter;
@@ -77,58 +84,87 @@ public class AdvancedPlayerController : MonoBehaviour
     private SpriteRenderer spriteRenderer;
     private Color originalColor;
 
+    // --- NEW INPUT SYSTEM BAŞLATMA ---
+    void Awake()
+    {
+        inputActions = new InputSystem_Actions();
+    }
+
+    void OnEnable()
+    {
+        inputActions.Enable();
+    }
+
+    void OnDisable()
+    {
+        inputActions.Disable();
+    }
 
     void Start()
     {
-        spriteRenderer = GetComponentInChildren<SpriteRenderer>(); // Visuals içindeyse oradan al
+        spriteRenderer = GetComponentInChildren<SpriteRenderer>();
         if (spriteRenderer) originalColor = spriteRenderer.color;
         currentStealthTime = maxStealthTime;
 
         rb = GetComponent<Rigidbody2D>();
         rb.gravityScale = gravityScale;
         if (playerJuice == null) playerJuice = GetComponentInChildren<PlayerJuice>();
+
+        if (GameManager.instance != null)
+        {
+            unlockDash = GameManager.instance.hasDash;
+            unlockDoubleJump = GameManager.instance.hasDoubleJump;
+            unlockWallJump = GameManager.instance.hasWallJump;
+
+            if (GameManager.instance.isReturningToHub && SceneManager.GetActiveScene().name == "NewHub")
+            {
+                transform.position = GameManager.instance.lastHubPosition;
+
+                // Kamera aniden ışınlansın diye (Cinemachine kullanıyorsan)
+                // Cinemachine bazen player ışınlanınca yavaşça kayar, bunu önlemek için:
+                //ForceCameraPosition(); // (Opsiyonel)
+
+                GameManager.instance.isReturningToHub = false;
+            }
+        }
     }
 
     void Update()
     {
-        // Dash atarken inputları okumayı bırakma ama fiziğe müdahale etme
-        if (Input.GetButtonDown("Jump")) jumpBufferCounter = jumpBufferTime;
+        // 1. INPUTLARI OKU (Eski Input.GetAxis yerine)
+        moveInput = inputActions.Player.Move.ReadValue<Vector2>();
+
+        // Zıplama Buffer (Eski Input.GetButtonDown yerine)
+        if (inputActions.Player.Jump.WasPressedThisFrame()) jumpBufferCounter = jumpBufferTime;
         else jumpBufferCounter -= Time.deltaTime;
 
         // Eğer Dash atıyorsak:
         if (isDashing)
         {
-            // Dash atarken zıplamaya basıldıysa Dash'i iptal et ve Zıpla (Celeste Mechanic)
             if (jumpBufferCounter > 0 && CheckWallOrGroundForDashJump())
             {
-                StopCoroutine(Dash()); // Dash coroutine'ini durdur
+                StopCoroutine(Dash());
                 isDashing = false;
-                rb.gravityScale = gravityScale; // Gravity'i geri aç
-                canDash = true; // İsteğe bağlı: Hakkını geri ver veya verme
-
-                // Buradan aşağısı normal akışa devam eder ve zıplama gerçekleşir
+                rb.gravityScale = gravityScale;
+                canDash = true;
+                // Double Jump hakkını da yenileyelim ki Dash Jump sonrası havada kalmasın
+                if (unlockDoubleJump) canDoubleJump = true;
             }
-            else
-            {
-                return; // Zıplama yoksa return at, Dash devam etsin
-            }
+            else return;
         }
 
-        // 1. Inputlar
-        horizontalInput = Input.GetAxisRaw("Horizontal");
-        verticalInput = Input.GetAxisRaw("Vertical");
-
         // 2. Dash Input (Celeste Style - Yöne Göre)
-        if (Input.GetKeyDown(KeyCode.LeftShift) && canDash && unlockDash)
+        // (Eski Input.GetKeyDown ve GetAxis yerine)
+        if (inputActions.Player.Dash.WasPressedThisFrame() && canDash && unlockDash)
         {
             // Input varsa o yöne, yoksa baktığı yöne
-            if (horizontalInput == 0 && verticalInput == 0)
+            if (moveInput == Vector2.zero)
             {
                 dashDir = new Vector2(isFacingRight ? 1 : -1, 0);
             }
             else
             {
-                dashDir = new Vector2(horizontalInput, verticalInput).normalized;
+                dashDir = moveInput.normalized;
             }
 
             StartCoroutine(Dash());
@@ -137,44 +173,47 @@ public class AdvancedPlayerController : MonoBehaviour
         // 3. Timer Yönetimi
         ManageTimers();
 
-        // 4. Duvar Kayma Kontrolü (Hollow Knight mantığı)
+        // 4. Duvar Kayma Kontrolü
         CheckWallSlide();
 
         // 5. Zıplama Mantığı
         if (jumpBufferCounter > 0)
         {
-            // Duvardan Zıplama (Wall Jump)
+            // 1. Öncelik: Duvardan Zıplama
             if (unlockWallJump && (isWallSliding || (isTouchingWall && !isGrounded)))
             {
                 PerformWallJump();
             }
-            // Normal Zıplama
+            // 2. Öncelik: Normal Zıplama (Yerdeyken)
             else if (coyoteTimeCounter > 0)
             {
                 PerformJump();
             }
+            // 3. Öncelik: DOUBLE JUMP (Havadaysak ve Hakkımız Varsa)
+            else if (unlockDoubleJump && canDoubleJump && !isGrounded && !isTouchingWall)
+            {
+                PerformDoubleJump();
+            }
         }
 
-        // 6. Variable Jump Height (Zıplamayı kesme)
-        if (Input.GetButtonUp("Jump") && rb.linearVelocity.y > 0)
+        if (inputActions.Player.Jump.WasReleasedThisFrame() && rb.linearVelocity.y > 0)
         {
             rb.linearVelocity = new Vector2(rb.linearVelocity.x, rb.linearVelocity.y * jumpCutMultiplier);
         }
 
-        // İniş Efekti
         if (!wasGrounded && isGrounded)
         {
             if (playerJuice) playerJuice.PlayLandEffect(rb.linearVelocity.y);
-            canDash = true; // Yere inince dash yenile (Celeste mantığı)
+            canDash = true;
+            // Yere inince double jump hakkını yenile
+            if (unlockDoubleJump) canDoubleJump = true;
         }
         wasGrounded = isGrounded;
 
-        // 7. Yön Çevirme
-        // Kontrol kilitliyken (WallJump sonrası) dönme!
         if (!isControlLocked && !isWallSliding)
         {
-            if (horizontalInput > 0 && !isFacingRight) Flip();
-            else if (horizontalInput < 0 && isFacingRight) Flip();
+            if (moveInput.x > 0 && !isFacingRight) Flip();
+            else if (moveInput.x < 0 && isFacingRight) Flip();
         }
 
         HandleStealth();
@@ -184,7 +223,6 @@ public class AdvancedPlayerController : MonoBehaviour
     {
         if (isDashing) return;
 
-        // Eğer kontrol kilitli değilse yürü (WallJump sonrası havada süzülme için)
         if (!isControlLocked)
         {
             Run();
@@ -197,13 +235,12 @@ public class AdvancedPlayerController : MonoBehaviour
     #region Movement Logic
     private void Run()
     {
-        float targetSpeed = horizontalInput * moveSpeed;
+        // moveInput.x kullanıyoruz
+        float targetSpeed = moveInput.x * moveSpeed;
         float speedDif = targetSpeed - rb.linearVelocity.x;
 
-        // Hızlanma ve Yavaşlama
         float accelRate = (Mathf.Abs(targetSpeed) > 0.01f) ? acceleration : decceleration;
 
-        // Havada kontrolü azalt ama tamamen bitirme (Hollow Knight havada kontrol verir)
         if (!isGrounded) accelRate *= airControl;
 
         float movement = Mathf.Pow(Mathf.Abs(speedDif) * accelRate, velPower) * Mathf.Sign(speedDif);
@@ -238,6 +275,23 @@ public class AdvancedPlayerController : MonoBehaviour
         jumpBufferCounter = 0;
         coyoteTimeCounter = 0;
 
+        if (unlockDoubleJump) canDoubleJump = true;
+
+        if (playerJuice) playerJuice.PlayJumpEffect();
+    }
+
+    private void PerformDoubleJump()
+    {
+        // Hızı sıfırla ki yerçekimiyle savaşmasın, anında yukarı fırlasın
+        rb.linearVelocity = new Vector2(rb.linearVelocity.x, 0);
+
+        // İstersen Double Jump gücünü biraz azaltabilirsin (örn: jumpForce * 0.8f)
+        rb.AddForce(Vector2.up * jumpForce * 0.8f , ForceMode2D.Impulse);
+
+        jumpBufferCounter = 0;
+        canDoubleJump = false; // Hakkı tüket
+
+        // Eğer farklı bir efekt veya ses istiyorsan buraya ekleyebilirsin
         if (playerJuice) playerJuice.PlayJumpEffect();
     }
 
@@ -249,8 +303,9 @@ public class AdvancedPlayerController : MonoBehaviour
             return;
         }
 
+        // Input duvara doğru mu? (moveInput.x ile kontrol)
         bool pushingWall = false;
-        if ((isFacingRight && horizontalInput > 0) || (!isFacingRight && horizontalInput < 0))
+        if ((isFacingRight && moveInput.x > 0) || (!isFacingRight && moveInput.x < 0))
         {
             pushingWall = true;
         }
@@ -258,17 +313,15 @@ public class AdvancedPlayerController : MonoBehaviour
         if (isTouchingWall && !isGrounded && rb.linearVelocity.y < 0 && pushingWall)
         {
             isWallSliding = true;
-            // Sabit kayma hızı
             rb.linearVelocity = new Vector2(rb.linearVelocity.x, -wallSlideSpeed);
-
             canDash = true;
+
+            if (unlockDoubleJump) canDoubleJump = true;
         }
         else
         {
             isWallSliding = false;
         }
-
-
     }
 
     private void PerformWallJump()
@@ -282,8 +335,9 @@ public class AdvancedPlayerController : MonoBehaviour
 
         jumpBufferCounter = 0;
 
-        Flip();
+        if (unlockDoubleJump) canDoubleJump = true;
 
+        Flip();
         StartCoroutine(DisableControlBriefly());
 
         if (playerJuice) playerJuice.PlayJumpEffect();
@@ -299,24 +353,17 @@ public class AdvancedPlayerController : MonoBehaviour
         float originalGravity = rb.gravityScale;
         rb.gravityScale = 0f;
 
-        // Dash yönüne fırlat
         rb.linearVelocity = dashDir * dashSpeed;
 
         if (playerJuice) playerJuice.PlayDashEffect();
 
         yield return new WaitForSeconds(dashDuration);
 
-        // --- DASH BİTİŞ KISMI ---
         rb.gravityScale = originalGravity;
         isDashing = false;
 
-        // SORUNUN ÇÖZÜMÜ BURADA:
-        // Eğer Dash bittiğinde hala yukarı doğru bir hızımız varsa,
-        // bu hızı sertçe kesiyoruz (Momentum Cut). 
-        // Böylece roket gibi uçmaya devam etmez.
         if (rb.linearVelocity.y > 0)
         {
-            // Y eksenindeki hızı %10'a düşür (0.1f), X aynen kalsın
             rb.linearVelocity = new Vector2(rb.linearVelocity.x, rb.linearVelocity.y * 0.25f);
         }
 
@@ -325,33 +372,30 @@ public class AdvancedPlayerController : MonoBehaviour
     }
     #endregion
 
-
     #region Stealth Logic
     private void HandleStealth()
     {
+        // Hareket kontrolü için de moveInput kullanıyoruz
         bool isMoving = Mathf.Abs(rb.linearVelocity.x) > 0.1f || Mathf.Abs(rb.linearVelocity.y) > 0.1f || isDashing;
 
-        // 2. Yorgunluk (Exhaustion) Yönetimi - FLICKER ÇÖZÜMÜ
         if (currentStealthTime <= 0)
         {
-            // Süre tamamen bitti, sistemi kitle
             isStealthExhausted = true;
-            currentStealthTime = 0; // Negatife düşmesin
+            currentStealthTime = 0;
         }
         else if (currentStealthTime >= minStealthToReactivate)
         {
-            // Süre belirlenen limite (örn. 1 saniye) kadar doldu, kilidi aç
             isStealthExhausted = false;
         }
 
-        // 3. Stealth Aktifleşme Şartları
-        // S basılı + Hareket YOK + Yorgun DEĞİL + Süre VAR
-        if (Input.GetKey(KeyCode.S) && !isMoving && !isStealthExhausted && currentStealthTime > 0)
+        // 3. Stealth Aktifleşme Şartları (Eski Input.GetKey yerine IsPressed)
+        bool isStealthPressed = inputActions.Player.Stealth.IsPressed();
+
+        if (isStealthPressed && !isMoving && !isStealthExhausted && currentStealthTime > 0)
         {
             IsHidden = true;
             currentStealthTime -= Time.deltaTime;
 
-            // Görsel Şeffaflık
             if (spriteRenderer)
             {
                 Color tempColor = originalColor;
@@ -359,29 +403,22 @@ public class AdvancedPlayerController : MonoBehaviour
                 spriteRenderer.color = tempColor;
             }
 
-            // Layer Değişimi (Ghost Mode)
             gameObject.layer = LayerMask.NameToLayer(stealthLayer);
         }
         else
         {
-            // Stealth Kapalı
             IsHidden = false;
 
-            // Süre dolumu (Max süreye gelene kadar doldur)
             if (currentStealthTime < maxStealthTime)
             {
                 currentStealthTime += Time.deltaTime * stealthRefillRate;
             }
 
-            // Görseli Normale Döndür
             if (spriteRenderer) spriteRenderer.color = originalColor;
-
-            // Layer Normale Döndür
             gameObject.layer = LayerMask.NameToLayer(defaultLayer);
         }
     }
     #endregion
-
 
     #region Helpers
     private IEnumerator DisableControlBriefly()
@@ -396,13 +433,11 @@ public class AdvancedPlayerController : MonoBehaviour
         if (isGrounded) coyoteTimeCounter = coyoteTime;
         else coyoteTimeCounter -= Time.deltaTime;
 
-        if (Input.GetButtonDown("Jump")) jumpBufferCounter = jumpBufferTime;
-        else jumpBufferCounter -= Time.deltaTime;
+        // Zıplama buffer yönetimi Update'te yapılıyor (WasPressedThisFrame kullandığımız için)
     }
 
     private bool CheckWallOrGroundForDashJump()
     {
-        // Yerdeysek veya Duvar Slide durumundaysak zıplamaya izin ver
         return isGrounded || isTouchingWall;
     }
 
