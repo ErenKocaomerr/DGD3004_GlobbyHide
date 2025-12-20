@@ -3123,6 +3123,13 @@ AnimationClip:
     floatParameter: 0
     intParameter: 0
     messageOptions: 0
+  - time: 14.466666
+    functionName: PauseStory
+    data: 
+    objectReferenceParameter: {fileID: 0}
+    floatParameter: 0
+    intParameter: 0
+    messageOptions: 0
   - time: 16.233334
     functionName: Speak
     data: 
@@ -3137,6 +3144,13 @@ AnimationClip:
     floatParameter: 0
     intParameter: 0
     messageOptions: 0
+  - time: 20.066668
+    functionName: PauseStory
+    data: 
+    objectReferenceParameter: {fileID: 0}
+    floatParameter: 0
+    intParameter: 0
+    messageOptions: 0
   - time: 20.583334
     functionName: Speak
     data: 
@@ -3146,6 +3160,13 @@ AnimationClip:
     messageOptions: 0
   - time: 23.016666
     functionName: Speak
+    data: 
+    objectReferenceParameter: {fileID: 0}
+    floatParameter: 0
+    intParameter: 0
+    messageOptions: 0
+  - time: 25.316668
+    functionName: PauseStory
     data: 
     objectReferenceParameter: {fileID: 0}
     floatParameter: 0

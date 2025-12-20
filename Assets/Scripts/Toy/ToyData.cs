@@ -2,11 +2,12 @@ using UnityEngine;
 
 public enum ToyType
 {
-    Bear,   // Ayýcýk
+    Rocket,   // Ayýcýk
     Car,    // Araba
-    Ball,   // Top
-    Duck,   // Ördek
-    Robot   // Robot
+    Duck,   // Top
+    Pig,   // Ördek
+    Pony,
+    Human,
 }
 
 public class ToyData : MonoBehaviour

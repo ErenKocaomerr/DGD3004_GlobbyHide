@@ -17,6 +17,10 @@ public class BossBrain : MonoBehaviour
     public BossHand rightHand;
     public GameObject bossHead;
     public Transform player;
+    public BossWeakPoint[] balloons;
+
+    public SpriteRenderer bossHeadSpriteRenderer; // Kafa objesinin Sprite Renderer'ý
+    public Sprite[] bossFaceSprites;
 
     [Header("--- Ayarlar ---")]
     public float groundYLevel = -3.5f;
@@ -53,10 +57,20 @@ public class BossBrain : MonoBehaviour
     public float clapSpeed = 0.2f;         // Çarpýþma hýzý (Düþük = Çok Hýzlý)
     public float clapRecovery = 1f;
 
+    [Header("--- Ses Efektleri (YENÝ) ---")]
+    public AudioClip bossRoarSFX;   // Faz deðiþimi / Kükreme
+    public AudioClip bossTiredSFX;  // Yorulma sesi
+    public AudioClip clapImpactSFX; // Alkýþ çarpýþma sesi
+    public AudioClip bossDeathSFX;  // Ölüm sesi
+    private AudioSource audioSource;
+
     void Start()
     {
+        audioSource = GetComponent<AudioSource>();
         currentHealth = maxHealth;
-        bossHead.SetActive(false);
+        UpdateBossFace();
+        //bossHead.SetActive(false);
+        foreach (var b in balloons) b.gameObject.SetActive(false);
         StartCoroutine(CombatLoop());
     }
 
@@ -97,6 +111,13 @@ public class BossBrain : MonoBehaviour
             Debug.Log("BOSS YORULDU!");
             bossHead.SetActive(true);
 
+            UpdateBossFace();
+
+            foreach (var b in balloons)
+            {
+                b.ResetBalloon(); // Hepsini görünür yap ve collider aç
+            }
+
             leftHand.SetAttackMode(false);
             rightHand.SetAttackMode(false);
 
@@ -109,7 +130,8 @@ public class BossBrain : MonoBehaviour
             // Dayak yeme süresi azalmýyor (Oyuncuya haksýzlýk olmasýn diye sabit 4sn)
             yield return new WaitForSeconds(tiredDuration);
 
-            bossHead.SetActive(false);
+            //bossHead.SetActive(false);
+            foreach (var b in balloons) b.gameObject.SetActive(false);
         }
     }
 
@@ -230,6 +252,7 @@ public class BossBrain : MonoBehaviour
 
         // 4. EFEKT: Kamera salla
         if (CameraShaker.instance) CameraShaker.instance.Shake(0.7f);
+        if (clapImpactSFX) audioSource.PlayOneShot(clapImpactSFX);
 
         // Burada bir "Clap Sound" çalabilirsin
 
@@ -244,10 +267,26 @@ public class BossBrain : MonoBehaviour
         yield return new WaitForSeconds(0.5f);
     }
 
+    public void OnBalloonPopped()
+    {
+        if (isDead) return;
+
+        // 1. Diðer balonlarýn colliderlarýný kapat ki oyuncu sekip hepsini patlatmasýn
+        foreach (var b in balloons)
+        {
+            b.GetComponent<Collider2D>().enabled = false;
+        }
+
+        // 2. Hasar al
+        TakeDamage();
+    }
+
     public void TakeDamage()
     {
         if (isDead) return;
         currentHealth--;
+
+        UpdateBossFace();
 
         if (currentHealth == 2)
         {
@@ -264,7 +303,6 @@ public class BossBrain : MonoBehaviour
             Debug.Log("BOSS FAZ 3: ÇILDIRDI! Çok Hýzlý ve +1 Saldýrý!");
         }
 
-        bossHead.SetActive(false);
         StopAllCoroutines();
 
         if (currentHealth <= 0) Die();
@@ -273,8 +311,14 @@ public class BossBrain : MonoBehaviour
 
     IEnumerator RecoverAndRestartLoop()
     {
+        yield return new WaitForSeconds(1.0f);
+
+        // ÞÝMDÝ balonlarý gizle
+        foreach (var b in balloons) b.gameObject.SetActive(false);
+
         leftHand.SetAttackMode(false);
         rightHand.SetAttackMode(false);
+
         yield return new WaitForSeconds(recoveryTime);
         StartCoroutine(CombatLoop());
     }
@@ -285,8 +329,24 @@ public class BossBrain : MonoBehaviour
         bossHead.SetActive(false);
         leftHand.gameObject.SetActive(false);
         rightHand.gameObject.SetActive(false);
+        foreach (var b in balloons) b.gameObject.SetActive(false);
         // Boss ölünce son bir kez büyük salla
         if (CameraShaker.instance) CameraShaker.instance.Shake(0.5f);
+    }
+
+    void UpdateBossFace()
+    {
+        if (bossHeadSpriteRenderer == null || bossFaceSprites.Length < 3) return;
+
+        // Can 3 ise -> Index 0
+        // Can 2 ise -> Index 1
+        // Can 1 ise -> Index 2
+        int spriteIndex = maxHealth - currentHealth;
+
+        // Hata önlemek için sýnýrla
+        spriteIndex = Mathf.Clamp(spriteIndex, 0, bossFaceSprites.Length - 1);
+
+        bossHeadSpriteRenderer.sprite = bossFaceSprites[spriteIndex];
     }
 
     void OnDrawGizmos()

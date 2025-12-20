@@ -6,11 +6,23 @@ using UnityEngine.SceneManagement;
 [RequireComponent(typeof(Rigidbody2D))]
 public class AdvancedPlayerController : MonoBehaviour
 {
+
+    [Header("--- Audio Settings (YENİ) ---")]
+    public AudioClip jumpSFX;
+    public AudioClip doubleJumpSFX;
+    public AudioClip wallJumpSFX;
+    public AudioClip dashSFX;
+    public AudioClip landSFX;
+
+    [Range(0.8f, 1.2f)] public float pitchRandomness = 0.1f; // Sesler hep aynı çıkmasın diye
+    private AudioSource audioSource;
+
     // --- NEW INPUT SYSTEM DEĞİŞKENLERİ ---
     private InputSystem_Actions inputActions;
     private Vector2 moveInput; // Yatay ve Dikey girdiyi burada tutacağız
 
     [Header("--- Temel Hareket ---")]
+    public Animator anim;
     public float moveSpeed = 10f;
     public float acceleration = 10f;
     public float decceleration = 10f;
@@ -30,6 +42,7 @@ public class AdvancedPlayerController : MonoBehaviour
 
     public bool unlockDoubleJump = false; // Özelliği aç/kapa
     private bool canDoubleJump; // Hakkımız var mı?
+    private bool canStelth;
 
     [Header("--- Duvar Mekanikleri (Hollow Knight) ---")]
     public float wallSlideSpeed = 2.5f;
@@ -62,6 +75,7 @@ public class AdvancedPlayerController : MonoBehaviour
     public LayerMask groundLayer;
     public bool unlockDash = false;
     public bool unlockWallJump = false;
+    public bool unlockStelth = false;
 
     // Internal Variables
     private Rigidbody2D rb;
@@ -102,7 +116,10 @@ public class AdvancedPlayerController : MonoBehaviour
 
     void Start()
     {
+        audioSource = GetComponent<AudioSource>();
+
         spriteRenderer = GetComponentInChildren<SpriteRenderer>();
+        if (anim == null) anim = GetComponentInChildren<Animator>();
         if (spriteRenderer) originalColor = spriteRenderer.color;
         currentStealthTime = maxStealthTime;
 
@@ -115,16 +132,18 @@ public class AdvancedPlayerController : MonoBehaviour
             unlockDash = GameManager.instance.hasDash;
             unlockDoubleJump = GameManager.instance.hasDoubleJump;
             unlockWallJump = GameManager.instance.hasWallJump;
+            unlockStelth = GameManager.instance.hide;
 
             if (GameManager.instance.isReturningToHub && SceneManager.GetActiveScene().name == "NewHub")
             {
                 transform.position = GameManager.instance.lastHubPosition;
-
-                // Kamera aniden ışınlansın diye (Cinemachine kullanıyorsan)
-                // Cinemachine bazen player ışınlanınca yavaşça kayar, bunu önlemek için:
-                //ForceCameraPosition(); // (Opsiyonel)
-
-                GameManager.instance.isReturningToHub = false;
+                GameManager.instance.isReturningToHub = false; // İşimiz bitti, kapat
+            }
+            // 2. Durum: Öldüysek ve Checkpointimiz varsa (Checkpointte doğmalı)
+            else if (GameManager.instance.hasActiveCheckpoint && SceneManager.GetActiveScene().name == "NewHub")
+            {
+                transform.position = GameManager.instance.currentCheckpointPos;
+                Debug.Log("Checkpoint Noktasına Işınlandı!");
             }
         }
     }
@@ -133,6 +152,8 @@ public class AdvancedPlayerController : MonoBehaviour
     {
         // 1. INPUTLARI OKU (Eski Input.GetAxis yerine)
         moveInput = inputActions.Player.Move.ReadValue<Vector2>();
+
+        HandleSimpleAnimations();
 
         // Zıplama Buffer (Eski Input.GetButtonDown yerine)
         if (inputActions.Player.Jump.WasPressedThisFrame()) jumpBufferCounter = jumpBufferTime;
@@ -216,7 +237,10 @@ public class AdvancedPlayerController : MonoBehaviour
             else if (moveInput.x < 0 && isFacingRight) Flip();
         }
 
-        HandleStealth();
+        if (unlockStelth)
+        {
+            HandleStealth();
+        }
     }
 
     void FixedUpdate()
@@ -232,6 +256,14 @@ public class AdvancedPlayerController : MonoBehaviour
         CheckCollisions();
     }
 
+    private void PlaySFX(AudioClip clip, float volume = 1f)
+    {
+        if (clip == null || audioSource == null) return;
+
+        // Her seferinde hafif farklı tonda çalsın (Robotik duyulmaz)
+        audioSource.PlayOneShot(clip, volume);
+    }
+
     #region Movement Logic
     private void Run()
     {
@@ -245,6 +277,20 @@ public class AdvancedPlayerController : MonoBehaviour
 
         float movement = Mathf.Pow(Mathf.Abs(speedDif) * accelRate, velPower) * Mathf.Sign(speedDif);
         rb.AddForce(movement * Vector2.right);
+    }
+
+    private void HandleSimpleAnimations()
+    {
+        if (anim == null) return;
+
+        // 1. RUN (KOŞMA) KONTROLÜ
+        // moveInput.x 0 değilse (sağa veya sola basılıyorsa) VE yerdeysek koşuyoruzdur.
+        bool isRunning = Mathf.Abs(moveInput.x) > 0.01f && isGrounded;
+        anim.SetBool("IsRunning", isRunning);
+
+        // 2. JUMP (ZIPLAMA) KONTROLÜ
+        // isGrounded TRUE ise yerdedir (Idle/Run), FALSE ise havadadır (Jump)
+        anim.SetBool("IsGrounded", isGrounded);
     }
 
     private void ApplyGravityModifiers()
@@ -278,6 +324,8 @@ public class AdvancedPlayerController : MonoBehaviour
         if (unlockDoubleJump) canDoubleJump = true;
 
         if (playerJuice) playerJuice.PlayJumpEffect();
+
+        PlaySFX(jumpSFX);
     }
 
     private void PerformDoubleJump()
@@ -293,6 +341,8 @@ public class AdvancedPlayerController : MonoBehaviour
 
         // Eğer farklı bir efekt veya ses istiyorsan buraya ekleyebilirsin
         if (playerJuice) playerJuice.PlayJumpEffect();
+
+        PlaySFX(doubleJumpSFX);
     }
 
     private void CheckWallSlide()
@@ -341,6 +391,8 @@ public class AdvancedPlayerController : MonoBehaviour
         StartCoroutine(DisableControlBriefly());
 
         if (playerJuice) playerJuice.PlayJumpEffect();
+
+        PlaySFX(wallJumpSFX);
     }
     #endregion
 
@@ -356,6 +408,8 @@ public class AdvancedPlayerController : MonoBehaviour
         rb.linearVelocity = dashDir * dashSpeed;
 
         if (playerJuice) playerJuice.PlayDashEffect();
+
+        PlaySFX(dashSFX);
 
         yield return new WaitForSeconds(dashDuration);
 

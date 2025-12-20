@@ -1,5 +1,6 @@
 using TMPro;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 public class MiniGameManager : MonoBehaviour
 {
@@ -10,6 +11,7 @@ public class MiniGameManager : MonoBehaviour
     public TMP_Text taskText;   // "Þunu Topla" yazýsý
     public TMP_Text scoreText;  // "Puan: 0" yazýsý
     public GameObject winPanel; // Kazandýn Paneli (Baþlangýçta kapalý olacak)
+    public GameObject startPanel;
 
     public int scoreToWin = 10; // Kaç puanda kazansýn?
     public float targetChangeInterval = 10f; // Hedef deðiþim süresi
@@ -31,7 +33,14 @@ public class MiniGameManager : MonoBehaviour
         UpdateScoreUI();
         winPanel.SetActive(false); // Kazanma ekranýný gizle
         ChangeTarget(); // Ýlk hedefi belirle
-        Time.timeScale = 1f; // Oyunu baþlat (Eðer durmuþsa)
+        startPanel.SetActive(true);
+        Time.timeScale = 0f; // Oyunu Durdur
+    }
+
+    public void StartGameButton()
+    {
+        startPanel.SetActive(false); // Paneli kapat
+        Time.timeScale = 1f; // Oyunu baþlat
     }
 
     void Update()
@@ -85,6 +94,14 @@ public class MiniGameManager : MonoBehaviour
 
         // 2. Oyunu Durdur (Oyuncaklar havada donsun)
         Time.timeScale = 0f;
+    }
+
+    public void TurnTown()
+    {
+        Time.timeScale = 1f;
+        GameManager.instance.UnlockAbility("Dash");
+        GameManager.instance.isReturningToHub = true;
+        SceneManager.LoadScene("NewHub");
     }
 
     // --- YARDIMCI FONKSÝYONLAR ---

@@ -19,12 +19,18 @@ public class PlayerHealth : MonoBehaviour
     public Sprite fullHeart;    // Opsiyonel: Dolu kalp resmi
     public Sprite emptyHeart;   // Opsiyonel: Boþ kalp resmi
 
+    [Header("--- Ses Efektleri (YENÝ) ---")]
+    public AudioClip hurtSFX;
+    public AudioClip deathSFX;
+    private AudioSource audioSource;
+
     // Bileþenler
     private SpriteRenderer spriteRenderer;
     private AdvancedPlayerController playerMovement; // Ölünce hareketi kitlemek için
 
     void Start()
     {
+        audioSource = GetComponent<AudioSource>();
         currentHealth = maxHealth;
         spriteRenderer = GetComponentInChildren<SpriteRenderer>();
         playerMovement = GetComponent<AdvancedPlayerController>();
@@ -48,9 +54,11 @@ public class PlayerHealth : MonoBehaviour
         if (currentHealth <= 0)
         {
             Die();
+            PlaySFX(deathSFX);
         }
         else
         {
+            PlaySFX(hurtSFX);
             StartCoroutine(InvincibilityRoutine());
         }
     }
@@ -114,5 +122,13 @@ public class PlayerHealth : MonoBehaviour
 
         // Sahneyi Yenile
         SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
+    }
+
+    void PlaySFX(AudioClip clip)
+    {
+        if (clip != null && audioSource != null)
+        {
+            audioSource.PlayOneShot(clip);
+        }
     }
 }

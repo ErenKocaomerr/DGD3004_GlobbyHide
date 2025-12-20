@@ -16,6 +16,12 @@ public class BossHand : MonoBehaviour
     private Collider2D col; // Collider referansý
     private Tween idleTween;
 
+    [Header("--- Ses Efektleri (YENÝ) ---")]
+    public AudioClip warningSFX;      // Titreme/Hazýrlýk sesi
+    public AudioClip smashImpactSFX;  // Yere vurma sesi
+    public AudioClip sweepSFX;        // Süpürme rüzgar sesi
+    private AudioSource audioSource;
+
     void Start()
     {
         initialPosition = transform.position;
@@ -72,7 +78,7 @@ public class BossHand : MonoBehaviour
         spriteRenderer.color = Color.white;
         transform.DOMoveY(groundY, duration).SetEase(Ease.InExpo).OnComplete(() =>
         {
-            // YERE VURDUÐUNDA:
+            if (smashImpactSFX) audioSource.PlayOneShot(smashImpactSFX);
 
             // 1. Ekraný Salla
             if (CameraShaker.instance != null) 

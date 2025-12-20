@@ -2018,6 +2018,10 @@ MonoBehaviour:
   hasDash: 0
   hasDoubleJump: 0
   hasWallJump: 0
+  hide: 0
+  lastHubPosition: {x: 0, y: 0}
+  isReturningToHub: 0
+  talkedNpcIDs: []
 --- !u!4 &1869603721
 Transform:
   m_ObjectHideFlags: 0
@@ -2064,7 +2068,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   creditsPanel: {fileID: 834164277}
-  gameSceneName: NewHub
+  gameSceneName: StoryScene
 --- !u!4 &1902481700
 Transform:
   m_ObjectHideFlags: 0

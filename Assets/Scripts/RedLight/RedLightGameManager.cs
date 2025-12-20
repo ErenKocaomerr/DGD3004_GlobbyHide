@@ -38,8 +38,16 @@ public class RedLightGameManager : MonoBehaviour
     private float toleranceTimer;
     private Vignette vignette;
 
+    public AudioClip greenLightSFX; // "Yeþil Iþýk / Düdük" sesi
+    public AudioClip redLightSFX;   // "Kýrmýzý Iþýk / Alarm" sesi
+    public AudioClip winSFX;        // Kazanma efekti
+    public AudioClip loseSFX;       // Kaybetme efekti
+    private AudioSource audioSource;
+
     void Start()
     {
+        audioSource = GetComponent<AudioSource>();
+
         // 1. Vignette Ayarý
         if (globalVolume.profile.TryGet(out vignette))
         {
@@ -117,6 +125,8 @@ public class RedLightGameManager : MonoBehaviour
         stateText.text = "YEÞÝL IÞIK (KOÞ!)";
         stateText.color = Color.green;
 
+        PlaySFX(greenLightSFX);
+
         if (vignette != null)
         {
             vignette.color.value = Color.green;
@@ -133,6 +143,8 @@ public class RedLightGameManager : MonoBehaviour
         stateText.text = "KIRMIZI IÞIK (SAKLAN!)";
         stateText.color = Color.red;
 
+        PlaySFX(redLightSFX);
+
         if (vignette != null)
         {
             vignette.color.value = Color.red;
@@ -147,6 +159,8 @@ public class RedLightGameManager : MonoBehaviour
         currentState = GameState.Win;
         stateText.text = "KAZANDIN!";
 
+        PlaySFX(winSFX);
+
         // Kazanma Panelini Aç
         winPanel.SetActive(true);
 
@@ -155,6 +169,8 @@ public class RedLightGameManager : MonoBehaviour
 
         // Efekti kapat
         if (vignette != null) vignette.intensity.value = 0f;
+
+        Time.timeScale = 0f;
     }
 
     void GameOver(string reason)
@@ -162,11 +178,14 @@ public class RedLightGameManager : MonoBehaviour
         currentState = GameState.GameOver;
         stateText.text = reason;
 
+        PlaySFX(loseSFX);
+
         // Kaybetme Panelini Aç
         gameOverPanel.SetActive(true);
 
         // Oyuncuyu Durdur
         LockPlayer(true);
+
 
         // Kýrmýzý/Siyah ekran efekti
         if (vignette != null)
@@ -174,6 +193,8 @@ public class RedLightGameManager : MonoBehaviour
             vignette.color.value = Color.black;
             vignette.intensity.value = 0.7f;
         }
+
+        Time.timeScale = 0f;
     }
 
     // --- YARDIMCI FONKSÝYON: Oyuncuyu Kilitleme ---
@@ -186,20 +207,30 @@ public class RedLightGameManager : MonoBehaviour
         {
             // Hýzýný sýfýrla ki kaymaya devam etmesin
             playerRb.linearVelocity = Vector2.zero;
-
             // Animasyonlarý durdurmak istersen buraya ekleyebilirsin
             // Örn: playerController.GetComponent<Animator>().speed = 0;
+        }
+    }
+
+    void PlaySFX(AudioClip clip)
+    {
+        if (clip != null && audioSource != null)
+        {
+            audioSource.PlayOneShot(clip);
         }
     }
 
     public void RestartGame()
     {
         SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
+        Time.timeScale = 1f;
     }
 
-    // Kazanma panelinden sonraki level'a geçmek için opsiyonel buton
-    public void LoadNextLevel()
+    public void TurnTown()
     {
+        Time.timeScale = 1f;
+        GameManager.instance.UnlockAbility("Hide");
+        GameManager.instance.isReturningToHub = true;
         SceneManager.LoadScene("NewHub");
     }
 }

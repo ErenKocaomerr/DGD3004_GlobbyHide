@@ -9,11 +9,15 @@ public class GameManager : MonoBehaviour
     public bool hasDash = false;
     public bool hasDoubleJump = false;
     public bool hasWallJump = false;
+    public bool hide = false;
 
     public Vector2 lastHubPosition; // Oyuncunun son durduðu yer
     public bool isReturningToHub;
 
     public List<string> talkedNpcIDs = new List<string>();
+
+    public Vector2 currentCheckpointPos; // Son checkpoint koordinatý
+    public bool hasActiveCheckpoint = false;
 
     void Awake()
     {
@@ -43,6 +47,9 @@ public class GameManager : MonoBehaviour
             case "WallJump":
                 hasWallJump = true;
                 break;
+            case "Hide":
+                hide = true;
+                break;
         }
 
         // Ýstersen burada PlayerPrefs.SetInt ile Kayýt (Save) iþlemi de yapabilirsin.
@@ -60,5 +67,12 @@ public class GameManager : MonoBehaviour
         {
             talkedNpcIDs.Add(npcID);
         }
+    }
+
+    public void SetCheckpoint(Vector2 pos)
+    {
+        currentCheckpointPos = pos;
+        hasActiveCheckpoint = true;
+        Debug.Log("Checkpoint Kaydedildi: " + pos);
     }
 }

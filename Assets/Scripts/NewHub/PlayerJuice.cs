@@ -10,7 +10,7 @@ public class PlayerJuice : MonoBehaviour
     public SpriteRenderer spriteRenderer;
 
     [Header("--- Squash & Stretch Ayarları ---")]
-    public float jumpSquashX = 0.7f;
+    public float jumpSquashX = 1f;
     public float jumpSquashY = 1.3f;
     public float landSquashX = 1.4f;
     public float landSquashY = 0.6f;

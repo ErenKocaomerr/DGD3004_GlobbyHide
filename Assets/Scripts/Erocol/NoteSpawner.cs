@@ -1,4 +1,5 @@
 using System.Collections;
+using TMPro;
 using UnityEngine;
 
 public class NoteSpawner : MonoBehaviour
@@ -18,9 +19,48 @@ public class NoteSpawner : MonoBehaviour
 
     float startTime;
 
+    [Header("--- UI ---")]
+    public TMP_Text countdownText;
+
     void Start()
     {
+        StartCoroutine(StartCountdown());
+    }
+
+    IEnumerator StartCountdown()
+    {
+        // Eðer text atanmamýþsa hata vermesin diye kontrol
+        if (countdownText != null)
+        {
+            countdownText.gameObject.SetActive(true); // Görünür yap
+
+            countdownText.text = "3";
+            // Ýstersen burada bir ses çal: AudioSource.PlayOneShot(beepSound);
+            yield return new WaitForSeconds(1f);
+
+            countdownText.text = "2";
+            yield return new WaitForSeconds(1f);
+
+            countdownText.text = "1";
+            yield return new WaitForSeconds(1f);
+
+            countdownText.text = "BAÞLA!"; // Veya "GO!"
+            yield return new WaitForSeconds(0.5f);
+
+            countdownText.gameObject.SetActive(false); // Gizle
+        }
+        else
+        {
+            // Eðer text yoksa boþuna 3 saniye beklemesin, hemen baþlasýn (Debug için)
+            Debug.LogWarning("Countdown Text atanmadý! Sayaçsýz baþlýyor.");
+        }
+
+        // --- OYUN BAÞLIYOR ---
+
+        // Zamaný þimdi baþlatýyoruz ki zorluk seviyesi 0'dan baþlasýn
         startTime = Time.time;
+
+        // Notlarý üretmeye baþla
         StartCoroutine(SpawnLoop());
     }
 
