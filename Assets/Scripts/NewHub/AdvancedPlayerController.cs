@@ -321,6 +321,9 @@ public class AdvancedPlayerController : MonoBehaviour
         jumpBufferCounter = 0;
         coyoteTimeCounter = 0;
 
+        isGrounded = false;
+        // -----------------------
+
         if (unlockDoubleJump) canDoubleJump = true;
 
         if (playerJuice) playerJuice.PlayJumpEffect();

@@ -166,8 +166,8 @@ MonoBehaviour:
   groundLayer:
     serializedVersion: 2
     m_Bits: 64
-  unlockDash: 1
-  unlockWallJump: 0
+  unlockDash: 0
+  unlockWallJump: 1
   unlockStelth: 0
 --- !u!114 &5403427576307515491
 MonoBehaviour:

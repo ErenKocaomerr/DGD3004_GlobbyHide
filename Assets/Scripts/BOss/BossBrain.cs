@@ -62,15 +62,18 @@ public class BossBrain : MonoBehaviour
     public AudioClip bossTiredSFX;  // Yorulma sesi
     public AudioClip clapImpactSFX; // Alkýþ çarpýþma sesi
     public AudioClip bossDeathSFX;  // Ölüm sesi
-    private AudioSource audioSource;
+    public AudioClip winSesi;
+    public AudioSource audioSource;
+
+    public GameObject successPanel;
 
     void Start()
     {
-        audioSource = GetComponent<AudioSource>();
         currentHealth = maxHealth;
         UpdateBossFace();
         //bossHead.SetActive(false);
         foreach (var b in balloons) b.gameObject.SetActive(false);
+        if (successPanel != null) successPanel.SetActive(false);
         StartCoroutine(CombatLoop());
     }
 
@@ -117,6 +120,9 @@ public class BossBrain : MonoBehaviour
             {
                 b.ResetBalloon(); // Hepsini görünür yap ve collider aç
             }
+
+            leftHand.StopEverything();
+            rightHand.StopEverything();
 
             leftHand.SetAttackMode(false);
             rightHand.SetAttackMode(false);
@@ -323,6 +329,24 @@ public class BossBrain : MonoBehaviour
         StartCoroutine(CombatLoop());
     }
 
+    IEnumerator ShowWinPanel()
+    {
+        yield return new WaitForSeconds(1.5f); // 1.5 saniye bekle
+
+        if (successPanel != null)
+        {
+            successPanel.SetActive(true);
+            // Ýstersen burada oyunu durdurabilirsin:
+            // Time.timeScale = 0f; 
+
+            audioSource.PlayOneShot(winSesi);
+        }
+        else
+        {
+            Debug.LogError("Success Panel atanmadý!");
+        }
+    }
+
     void Die()
     {
         isDead = true;
@@ -332,6 +356,8 @@ public class BossBrain : MonoBehaviour
         foreach (var b in balloons) b.gameObject.SetActive(false);
         // Boss ölünce son bir kez büyük salla
         if (CameraShaker.instance) CameraShaker.instance.Shake(0.5f);
+
+        StartCoroutine(ShowWinPanel());
     }
 
     void UpdateBossFace()

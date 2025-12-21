@@ -66,8 +66,8 @@ public class RedLightGameManager : MonoBehaviour
         gameOverPanel.SetActive(false);
         winPanel.SetActive(false);
 
-        stateText.text = "HAZIR MISIN?";
-        timerText.text = "Süre: " + levelTime;
+        stateText.text = "Are you Ready?";
+        timerText.text = "Time: " + levelTime;
 
         // 3. OYUNCUYU KÝLÝTLE (Hareket edemesin)
         LockPlayer(true);
@@ -91,7 +91,7 @@ public class RedLightGameManager : MonoBehaviour
         // 1. Süre
         levelTime -= Time.deltaTime;
         timerText.text = "Süre: " + Mathf.Ceil(levelTime).ToString();
-        if (levelTime <= 0) GameOver("SÜRE BÝTTÝ!");
+        if (levelTime <= 0) GameOver("Time is Over!");
 
         // 2. Iþýk Döngüsü
         stateTimer -= Time.deltaTime;
@@ -109,10 +109,10 @@ public class RedLightGameManager : MonoBehaviour
             if (toleranceTimer <= 0)
             {
                 if (playerRb.linearVelocity.magnitude > 0.1f)
-                    GameOver("KIMILDADIN!");
+                    GameOver("You Moved ):!");
 
                 if (!playerController.IsHidden)
-                    GameOver("SAKLANMADIN! (Göründün)");
+                    GameOver("You Did not Hide");
             }
         }
     }
@@ -122,7 +122,7 @@ public class RedLightGameManager : MonoBehaviour
         currentState = GameState.Green;
         stateTimer = Random.Range(minGreenTime, maxGreenTime);
 
-        stateText.text = "YEÞÝL IÞIK (KOÞ!)";
+        stateText.text = "Run!!!";
         stateText.color = Color.green;
 
         PlaySFX(greenLightSFX);
@@ -140,7 +140,7 @@ public class RedLightGameManager : MonoBehaviour
         stateTimer = Random.Range(minRedTime, maxRedTime);
         toleranceTimer = movementTolerance;
 
-        stateText.text = "KIRMIZI IÞIK (SAKLAN!)";
+        stateText.text = "Hide!!!";
         stateText.color = Color.red;
 
         PlaySFX(redLightSFX);
@@ -157,7 +157,7 @@ public class RedLightGameManager : MonoBehaviour
         if (currentState == GameState.GameOver) return;
 
         currentState = GameState.Win;
-        stateText.text = "KAZANDIN!";
+        stateText.text = "Congrats!";
 
         PlaySFX(winSFX);
 

@@ -96,8 +96,8 @@ public class LevelManager : MonoBehaviour
 
     public void ReturnTown()
     {
-        EndManager.Instance.value++;
-        SceneManager.LoadScene("TownScene");
+        GameManager.instance.isReturningToHub = true;
+        SceneManager.LoadScene("NewHub");
     }
 
 

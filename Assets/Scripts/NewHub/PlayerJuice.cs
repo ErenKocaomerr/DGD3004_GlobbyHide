@@ -68,7 +68,7 @@ public class PlayerJuice : MonoBehaviour
         // Yere sert vurduysa kamera sallansın
         if (Mathf.Abs(impactVelocity) > 15f)
         {
-            ShakeCamera(0.5f);
+           // ShakeCamera(0.5f);
         }
     }
     #endregion

@@ -72,7 +72,7 @@ public class MiniGameManager : MonoBehaviour
 
     void UpdateScoreUI()
     {
-        scoreText.text = "Puan: " + currentScore + " / " + scoreToWin;
+        scoreText.text = "Score: " + currentScore + " / " + scoreToWin;
     }
 
     void CheckWinCondition()
@@ -111,6 +111,6 @@ public class MiniGameManager : MonoBehaviour
         ToyType newTarget = allTypes[Random.Range(0, allTypes.Length)];
 
         playerBasket.currentTargetType = newTarget;
-        taskText.text = "GÖREV: " + newTarget.ToString().ToUpper() + " TOPLA!";
+        taskText.text = "Mission: " + newTarget.ToString().ToUpper() + " Catch!";
     }
 }

@@ -3,7 +3,7 @@ using UnityEngine;
 
 public class GameManager : MonoBehaviour
 {
-    public static GameManager instance; // Heryerden eriþim için Singleton
+    public static GameManager instance;
 
     [Header("--- Kazanýlan Yetenekler ---")]
     public bool hasDash = false;
@@ -11,26 +11,48 @@ public class GameManager : MonoBehaviour
     public bool hasWallJump = false;
     public bool hide = false;
 
-    public Vector2 lastHubPosition; // Oyuncunun son durduðu yer
+    public Vector2 lastHubPosition;
     public bool isReturningToHub;
 
+    [Header("--- Diyalog Hafýzasý ---")]
     public List<string> talkedNpcIDs = new List<string>();
 
-    public Vector2 currentCheckpointPos; // Son checkpoint koordinatý
+    public Vector2 currentCheckpointPos;
     public bool hasActiveCheckpoint = false;
 
     void Awake()
     {
-        // Singleton Yapýsý: Bu objeden sadece bir tane olsun ve sahne geçiþinde yok olmasýn.
         if (instance == null)
         {
             instance = this;
-            DontDestroyOnLoad(gameObject); // BÜYÜ BURADA
+            DontDestroyOnLoad(gameObject);
         }
         else
         {
-            Destroy(gameObject); // Eðer 2. bir GameManager oluþursa onu yok et
+            Destroy(gameObject);
         }
+    }
+
+    void Update()
+    {
+        // --- TEST ÝÇÝN KISAYOL ---
+        // Sadece Unity Editöründe çalýþýr, oyunun son halinde çalýþmaz (Güvenli)
+#if UNITY_EDITOR
+        if (Input.GetKeyDown(KeyCode.P)) // 'P' tuþuna basýnca hafýzayý sil
+        {
+            ResetDialogueMemory();
+        }
+#endif
+    }
+
+    // --- YENÝ: SIFIRLAMA FONKSÝYONU ---
+    // [ContextMenu] sayesinde oyun çalýþýrken GameManager componentine 
+    // sað týklayýp bu fonksiyonu çalýþtýrabilirsin.
+    [ContextMenu("Reset Dialogue Memory")]
+    public void ResetDialogueMemory()
+    {
+        talkedNpcIDs.Clear(); // Listeyi temizle
+        Debug.Log("<color=red>--- DÝYALOG HAFIZASI SIFIRLANDI! ---</color>");
     }
 
     // Yeteneði Açmak Ýçin Fonksiyon
@@ -38,21 +60,11 @@ public class GameManager : MonoBehaviour
     {
         switch (abilityName)
         {
-            case "Dash":
-                hasDash = true;
-                break;
-            case "DoubleJump":
-                hasDoubleJump = true;
-                break;
-            case "WallJump":
-                hasWallJump = true;
-                break;
-            case "Hide":
-                hide = true;
-                break;
+            case "Dash": hasDash = true; break;
+            case "DoubleJump": hasDoubleJump = true; break;
+            case "WallJump": hasWallJump = true; break;
+            case "Hide": hide = true; break;
         }
-
-        // Ýstersen burada PlayerPrefs.SetInt ile Kayýt (Save) iþlemi de yapabilirsin.
     }
 
     public bool HasTalkedTo(string npcID)
@@ -60,7 +72,6 @@ public class GameManager : MonoBehaviour
         return talkedNpcIDs.Contains(npcID);
     }
 
-    // NPC'yi "Konuþuldu" olarak iþaretle
     public void MarkNpcAsTalked(string npcID)
     {
         if (!talkedNpcIDs.Contains(npcID))

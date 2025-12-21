@@ -22,7 +22,7 @@ public class PlayerHealth : MonoBehaviour
     [Header("--- Ses Efektleri (YENÝ) ---")]
     public AudioClip hurtSFX;
     public AudioClip deathSFX;
-    private AudioSource audioSource;
+    public AudioSource audioSource;
 
     // Bileþenler
     private SpriteRenderer spriteRenderer;
@@ -30,7 +30,6 @@ public class PlayerHealth : MonoBehaviour
 
     void Start()
     {
-        audioSource = GetComponent<AudioSource>();
         currentHealth = maxHealth;
         spriteRenderer = GetComponentInChildren<SpriteRenderer>();
         playerMovement = GetComponent<AdvancedPlayerController>();

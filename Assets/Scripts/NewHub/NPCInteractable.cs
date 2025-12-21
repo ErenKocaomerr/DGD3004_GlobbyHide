@@ -7,15 +7,21 @@ using UnityEngine.UI;
 public class NPCInteractable : MonoBehaviour
 {
     [Header("--- Kimlik (ÇOK ÖNEMLÝ) ---")]
-    public string npcID; // GameManager bunu tanýyacak (Örn: "Level1_Guard")
+    public string npcID;
 
     [Header("--- Sahne Ayarlarý ---")]
     public string sceneToLoad;
     public string npcName = "Gizemli Yolcu";
 
     [Header("--- Diyaloglar ---")]
-    [TextArea(3, 10)] public string[] firstDialogueLines;  // Ýlk konuþma
-    [TextArea(3, 10)] public string[] secondDialogueLines; // Sonraki konuþmalar
+    [TextArea(3, 10)] public string[] firstDialogueLines;
+    [TextArea(3, 10)] public string[] secondDialogueLines;
+
+    [Header("--- Ödüller (Yetenek Ver) ---")]
+    public bool giveDash;
+    public bool giveDoubleJump;
+    public bool giveHide;
+    public bool giveWallJump;
 
     [Header("--- Referanslar ---")]
     public GameObject interactPromptUI;
@@ -31,15 +37,17 @@ public class NPCInteractable : MonoBehaviour
     private bool isPlayerInRange;
     private bool isDialogueActive;
     private int currentLineIndex;
-
-    // Hangi diyaloðu kullanacaðýz?
     private string[] currentLinesToDisplay;
-    private bool hasTalkedBefore; // Daha önce konuþtuk mu?
+    private bool hasTalkedBefore;
 
     void Awake()
     {
         inputActions = new InputSystem_Actions();
-        nextLineButton.onClick.AddListener(AdvanceDialogue);
+        if (nextLineButton != null)
+        {
+            nextLineButton.onClick.RemoveAllListeners();
+            nextLineButton.onClick.AddListener(AdvanceDialogue);
+        }
     }
 
     void OnEnable() => inputActions.Enable();
@@ -47,46 +55,64 @@ public class NPCInteractable : MonoBehaviour
 
     void Start()
     {
-        // Oyun baþýnda GameManager'a sor: Bu NPC ile konuþtum mu?
+        if (dialoguePanel != null) dialoguePanel.SetActive(false);
+
         if (GameManager.instance != null)
         {
             hasTalkedBefore = GameManager.instance.HasTalkedTo(npcID);
         }
     }
 
+    // --- BURASI GÜNCELLENDÝ ---
     void Update()
     {
-        // Eðer menzildeysek, diyalog açýk deðilse ve E'ye basýldýysa
-        if (isPlayerInRange && !isDialogueActive && inputActions.Player.Interact.WasPressedThisFrame())
+        // Interact tuþuna (E) basýldý mý?
+        if (inputActions.Player.Interact.WasPressedThisFrame())
         {
-            StartDialogue();
+            // 1. Menzildeyiz ve konuþmuyoruz -> Diyaloðu Baþlat
+            if (isPlayerInRange && !isDialogueActive)
+            {
+                StartDialogue();
+            }
+            // 2. Zaten konuþuyoruz -> Diyaloðu Ýlerlet
+            else if (isDialogueActive)
+            {
+                AdvanceDialogue();
+            }
         }
     }
+    // ---------------------------
 
     void StartDialogue()
     {
-        // KONTROL 1: Daha önce konuþtuk mu?
         if (hasTalkedBefore)
         {
-            // Eðer ikinci bir diyalog yoksa, HÝÇBÝR ÞEY YAPMA (Konuþmayý açma)
-            if (secondDialogueLines.Length == 0) return;
-
-            // Ýkinci diyaloðu yükle
+            if (secondDialogueLines == null || secondDialogueLines.Length == 0) return;
             currentLinesToDisplay = secondDialogueLines;
         }
         else
         {
-            // Ýlk kez konuþuyoruz
-            currentLinesToDisplay = firstDialogueLines;
+            if (firstDialogueLines == null || firstDialogueLines.Length == 0)
+            {
+                Debug.LogWarning("Diyalog boþ, geçici metin atanýyor.");
+                currentLinesToDisplay = new string[] { "..." };
+            }
+            else
+            {
+                currentLinesToDisplay = firstDialogueLines;
+            }
         }
+
+        if (currentLinesToDisplay == null || currentLinesToDisplay.Length == 0) return;
 
         isDialogueActive = true;
         currentLineIndex = 0;
 
-        interactPromptUI.SetActive(false);
-        dialoguePanel.SetActive(true);
-        nameText.text = npcName;
-        dialogueText.text = currentLinesToDisplay[0]; // Seçili diziden oku
+        if (interactPromptUI) interactPromptUI.SetActive(false);
+        if (dialoguePanel) dialoguePanel.SetActive(true);
+        if (nameText) nameText.text = npcName;
+
+        if (dialogueText) dialogueText.text = currentLinesToDisplay[0];
 
         if (zoomCamera != null) zoomCamera.Priority = 20;
 
@@ -99,43 +125,51 @@ public class NPCInteractable : MonoBehaviour
 
     public void AdvanceDialogue()
     {
+        // Diyalog aktif deðilse veya metin yoksa iþlem yapma
+        if (!isDialogueActive || currentLinesToDisplay == null) return;
+
         currentLineIndex++;
 
+        // Dizinin sýnýrlarý içinde miyiz?
         if (currentLineIndex < currentLinesToDisplay.Length)
         {
-            dialogueText.text = currentLinesToDisplay[currentLineIndex];
+            if (dialogueText) dialogueText.text = currentLinesToDisplay[currentLineIndex];
         }
         else
         {
+            // Dizi bittiyse kapat
             EndDialogue();
         }
     }
 
     void EndDialogue()
     {
-        // Konuþma bittiðinde GameManager'a kaydet
-        if (GameManager.instance != null && !string.IsNullOrEmpty(npcID))
+        if (GameManager.instance != null)
         {
-            GameManager.instance.MarkNpcAsTalked(npcID);
-            hasTalkedBefore = true; // Anlýk durumu güncelle
+            if (currentLinesToDisplay == firstDialogueLines)
+            {
+                if (giveDash) GameManager.instance.UnlockAbility("Dash");
+                if (giveDoubleJump) GameManager.instance.UnlockAbility("DoubleJump");
+                if (giveHide) GameManager.instance.UnlockAbility("Hide");
+                //if (giveWallJump) GameManager.instance.UnlockAbility("WallJump");
+            }
+
+            if (!string.IsNullOrEmpty(npcID))
+            {
+                GameManager.instance.MarkNpcAsTalked(npcID);
+                hasTalkedBefore = true;
+            }
+            GameManager.instance.lastHubPosition = transform.position;
         }
 
-        // Pozisyonu Kaydet (Sadece sahne deðiþecekse gerekli ama dursun)
-        if (GameManager.instance != null) GameManager.instance.lastHubPosition = transform.position;
-
-        // Sahne Geçiþi Var mý?
         if (!string.IsNullOrEmpty(sceneToLoad))
         {
-            // Sadece ÝLK konuþmada mý sahne deðiþsin istiyorsun?
-            // Genelde "Görev NPC'si" ilk konuþmada gönderir, sonra "Bol þans" der.
-            // Eðer her seferinde göndersin istiyorsan bu if'i kaldýr.
             if (currentLinesToDisplay == firstDialogueLines)
             {
                 SceneManager.LoadScene(sceneToLoad);
             }
             else
             {
-                // Ýkinci konuþmaysa sadece kutuyu kapat
                 CloseDialogueBox();
             }
         }
@@ -148,20 +182,18 @@ public class NPCInteractable : MonoBehaviour
     void CloseDialogueBox()
     {
         isDialogueActive = false;
-        dialoguePanel.SetActive(false);
+        if (dialoguePanel) dialoguePanel.SetActive(false);
 
         if (zoomCamera != null) zoomCamera.Priority = 0;
         if (player != null) player.enabled = true;
 
-        // KUTU KAPANDIKTAN SONRA TEKRAR E ÇIKSIN MI?
-        // Kural: Eðer ikinci diyalog YOKSA ve zaten konuþtuysak, "E" yazýsý çýkmasýn.
-        if (hasTalkedBefore && secondDialogueLines.Length == 0)
+        if (hasTalkedBefore && (secondDialogueLines == null || secondDialogueLines.Length == 0))
         {
-            interactPromptUI.SetActive(false);
+            if (interactPromptUI) interactPromptUI.SetActive(false);
         }
         else if (isPlayerInRange)
         {
-            interactPromptUI.SetActive(true);
+            if (interactPromptUI) interactPromptUI.SetActive(true);
         }
     }
 
@@ -172,15 +204,13 @@ public class NPCInteractable : MonoBehaviour
             isPlayerInRange = true;
             if (player == null) player = collision.GetComponent<AdvancedPlayerController>();
 
-            // Ekrana "E" yazýsýný çýkarma kontrolü:
-            // Eðer daha önce konuþtuysak VE ikinci bir diyeceði yoksa -> Yazý Çýkmasýn.
-            if (hasTalkedBefore && secondDialogueLines.Length == 0)
+            if (hasTalkedBefore && (secondDialogueLines == null || secondDialogueLines.Length == 0))
             {
-                interactPromptUI.SetActive(false);
+                if (interactPromptUI) interactPromptUI.SetActive(false);
             }
             else if (!isDialogueActive)
             {
-                interactPromptUI.SetActive(true);
+                if (interactPromptUI) interactPromptUI.SetActive(true);
             }
         }
     }
@@ -190,8 +220,15 @@ public class NPCInteractable : MonoBehaviour
         if (collision.CompareTag("Player"))
         {
             isPlayerInRange = false;
-            interactPromptUI.SetActive(false);
+            if (interactPromptUI) interactPromptUI.SetActive(false);
             if (isDialogueActive) CloseDialogueBox();
         }
+    }
+
+    [ContextMenu("Reset This NPC Status")]
+    public void ResetNPCData()
+    {
+        hasTalkedBefore = false;
+        Debug.Log(npcName + " sýfýrlandý.");
     }
 }
