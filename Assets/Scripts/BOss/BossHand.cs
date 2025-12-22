@@ -22,6 +22,8 @@ public class BossHand : MonoBehaviour
     public AudioClip sweepSFX;
     public AudioSource audioSource;
 
+    public bool isDamaging = false;
+
     void Start()
     {
         initialPosition = transform.position;
@@ -64,6 +66,7 @@ public class BossHand : MonoBehaviour
     public void TrackPlayer(Vector3 targetPos)
     {
         StopFloating();
+        isDamaging = false;
         transform.DOMove(targetPos, trackingSmoothness).SetEase(Ease.OutQuad);
     }
 
@@ -76,6 +79,7 @@ public class BossHand : MonoBehaviour
     public void SmashDown(float groundY, float duration)
     {
         spriteRenderer.color = Color.white;
+        isDamaging = true;
         transform.DOMoveY(groundY, duration).SetEase(Ease.InExpo).OnComplete(() =>
         {
             if (smashImpactSFX) audioSource.PlayOneShot(smashImpactSFX);
@@ -83,6 +87,8 @@ public class BossHand : MonoBehaviour
             {
                 CameraShaker.instance.Shake(0.75f);
             }
+
+            isDamaging = false;
         });
     }
 
@@ -101,15 +107,29 @@ public class BossHand : MonoBehaviour
     {
         StopFloating();
         spriteRenderer.color = Color.white;
-        transform.DOMoveX(targetX, duration).SetEase(Ease.Linear);
+
+        // Süpürme boyunca hasar AÇIK
+        isDamaging = true;
+
+        transform.DOMoveX(targetX, duration).SetEase(Ease.Linear).OnComplete(() =>
+        {
+            // Hareket bitince hasar KAPALI
+            isDamaging = false;
+        });
     }
 
     private void OnTriggerEnter2D(Collider2D other)
     {
-        if (other.CompareTag("Player"))
+        // ARTIK SADECE "isDamaging" TRUE ÝSE HASAR VERÝYORUZ
+        if (isDamaging && other.CompareTag("Player"))
         {
+            Debug.Log("EL OYUNCUYA VURDU (Attack Mode)!");
+
             PlayerHealth health = other.GetComponent<PlayerHealth>();
-            if (health != null) health.TakeDamage(damage);
+            if (health != null)
+            {
+                health.TakeDamage(damage);
+            }
         }
     }
 

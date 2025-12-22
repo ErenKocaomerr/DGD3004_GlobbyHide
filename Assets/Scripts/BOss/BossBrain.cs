@@ -85,8 +85,8 @@ public class BossBrain : MonoBehaviour
         {
             for (int i = 0; i < attacksPerRound; i++)
             {
-                leftHand.SetAttackMode(false);
-                rightHand.SetAttackMode(false);
+                leftHand.SetAttackMode(true);
+                rightHand.SetAttackMode(true);
 
                 // Idle'a dönerken RAGE çarpanýný kullanmýyoruz (Güvenli olsun)
                 leftHand.ReturnToIdle(0.5f);
@@ -169,8 +169,6 @@ public class BossBrain : MonoBehaviour
 
         yield return new WaitForSeconds(doubleSmashRecovery);
 
-        leftHand.SetAttackMode(false);
-        rightHand.SetAttackMode(false);
 
         leftHand.ReturnToIdle(0.5f);
         rightHand.ReturnToIdle(0.5f);
@@ -216,7 +214,6 @@ public class BossBrain : MonoBehaviour
         leftHand.SweepMove(xBound + 2, sweepDuration);
         yield return new WaitForSeconds(sweepDuration);
 
-        leftHand.SetAttackMode(false);
         leftHand.ReturnToIdle(1f);
         yield return new WaitForSeconds(1f);
     }
@@ -249,6 +246,9 @@ public class BossBrain : MonoBehaviour
         leftHand.SetAttackMode(true);
         rightHand.SetAttackMode(true);
 
+        leftHand.isDamaging = true;
+        rightHand.isDamaging = true;
+
         // Ortada buluþsunlar (X=0 noktasýnda)
         // SetEase(Ease.InBack) kullanarak "gerilip vurma" efekti verebiliriz
         leftHand.transform.DOMoveX(-1f, clapSpeed).SetEase(Ease.InBack); // Hafif boþluk kalsýn (-1)
@@ -260,13 +260,15 @@ public class BossBrain : MonoBehaviour
         if (CameraShaker.instance) CameraShaker.instance.Shake(0.7f);
         if (clapImpactSFX) audioSource.PlayOneShot(clapImpactSFX);
 
+        leftHand.isDamaging = false;
+        rightHand.isDamaging = false;
+
         // Burada bir "Clap Sound" çalabilirsin
 
         yield return new WaitForSeconds(clapRecovery * rageMultiplier);
 
         // 5. BÝTÝÞ
-        leftHand.SetAttackMode(false);
-        rightHand.SetAttackMode(false);
+
 
         leftHand.ReturnToIdle(1f);
         rightHand.ReturnToIdle(1f);
