@@ -2,6 +2,7 @@ using System.Collections;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.SceneManagement;
+using UnityEngine.UI;
 
 [RequireComponent(typeof(Rigidbody2D))]
 public class AdvancedPlayerController : MonoBehaviour
@@ -76,6 +77,10 @@ public class AdvancedPlayerController : MonoBehaviour
     public bool unlockDash = false;
     public bool unlockWallJump = false;
     public bool unlockStelth = false;
+
+    [Header("--- UI Elements ---")]
+    public Slider stealthSlider;
+    public GameObject stealthCanvasObj;
 
     // Internal Variables
     private Rigidbody2D rb;
@@ -241,6 +246,8 @@ public class AdvancedPlayerController : MonoBehaviour
         {
             HandleStealth();
         }
+
+        if (stealthSlider != null) stealthSlider.value = currentStealthTime;
     }
 
     void FixedUpdate()
@@ -461,6 +468,8 @@ public class AdvancedPlayerController : MonoBehaviour
             }
 
             gameObject.layer = LayerMask.NameToLayer(stealthLayer);
+
+            if (stealthCanvasObj != null) stealthCanvasObj.SetActive(true);
         }
         else
         {
@@ -473,6 +482,8 @@ public class AdvancedPlayerController : MonoBehaviour
 
             if (spriteRenderer) spriteRenderer.color = originalColor;
             gameObject.layer = LayerMask.NameToLayer(defaultLayer);
+
+            if (stealthCanvasObj != null) stealthCanvasObj.SetActive(false);
         }
     }
     #endregion
