@@ -81,6 +81,9 @@ public class AdvancedPlayerController : MonoBehaviour
     [Header("--- UI Elements ---")]
     public Slider stealthSlider;
     public GameObject stealthCanvasObj;
+    public GameObject dashIconObj;       // Dash resmi
+    public GameObject doubleJumpIconObj; // Çift zıplama resmi
+    public GameObject stealthIconObj;
 
     // Internal Variables
     private Rigidbody2D rb;
@@ -151,6 +154,28 @@ public class AdvancedPlayerController : MonoBehaviour
                 Debug.Log("Checkpoint Noktasına Işınlandı!");
             }
         }
+
+        UpdateAbilityUI();
+
+        // Slider Ayarları
+        if (stealthSlider != null)
+        {
+            stealthSlider.maxValue = maxStealthTime;
+            stealthSlider.value = currentStealthTime;
+        }
+        if (stealthCanvasObj != null) stealthCanvasObj.SetActive(false);
+    }
+
+    public void UpdateAbilityUI()
+    {
+        // Eğer Dash açıksa ikonu göster, kapalıysa gizle
+        if (dashIconObj != null) dashIconObj.SetActive(unlockDash);
+
+        // Eğer Double Jump açıksa ikonu göster
+        if (doubleJumpIconObj != null) doubleJumpIconObj.SetActive(unlockDoubleJump);
+
+        // Eğer Stealth açıksa ikonu göster
+        if (stealthIconObj != null) stealthIconObj.SetActive(unlockStelth);
     }
 
     void Update()

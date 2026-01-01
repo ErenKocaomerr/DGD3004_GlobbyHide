@@ -63,7 +63,7 @@ public class Stone : MonoBehaviour
 
     void OnBecameInvisible()
     {
-        if (transform.position.y < Camera.main.transform.position.y - 25f)
+        if (transform.position.y < Camera.main.transform.position.y - 25f && gameObject != null)
             Destroy(gameObject);
     }
 }
