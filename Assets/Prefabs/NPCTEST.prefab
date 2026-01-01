@@ -12,6 +12,7 @@ GameObject:
   - component: {fileID: 4134489255256423875}
   - component: {fileID: 7607678498473507601}
   - component: {fileID: 4539614573497636126}
+  - component: {fileID: 4865273627299216450}
   m_Layer: 0
   m_Name: NPCTEST
   m_TagString: Untagged
@@ -156,6 +157,10 @@ MonoBehaviour:
   - Harbi oyle AQ
   secondDialogueLines:
   - Erenin Malligi testiklendi Congrats
+  giveDash: 0
+  giveDoubleJump: 0
+  giveHide: 0
+  giveWallJump: 0
   interactPromptUI: {fileID: 0}
   dialoguePanel: {fileID: 0}
   dialogueText: {fileID: 0}
@@ -163,6 +168,28 @@ MonoBehaviour:
   nextLineButton: {fileID: 0}
   zoomCamera: {fileID: 3652399867899323741}
   player: {fileID: 0}
+--- !u!95 &4865273627299216450
+Animator:
+  serializedVersion: 7
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2771430185953227319}
+  m_Enabled: 1
+  m_Avatar: {fileID: 0}
+  m_Controller: {fileID: 9100000, guid: 8448b5a5fff9ff740b6bc09bdf155f56, type: 2}
+  m_CullingMode: 0
+  m_UpdateMode: 0
+  m_ApplyRootMotion: 0
+  m_LinearVelocityBlending: 0
+  m_StabilizeFeet: 0
+  m_AnimatePhysics: 0
+  m_WarningMessage: 
+  m_HasTransformHierarchy: 1
+  m_AllowConstantClipSamplingOptimization: 1
+  m_KeepAnimatorStateOnDisable: 0
+  m_WriteDefaultValuesOnDisable: 0
 --- !u!1 &6943513962000028993
 GameObject:
   m_ObjectHideFlags: 0

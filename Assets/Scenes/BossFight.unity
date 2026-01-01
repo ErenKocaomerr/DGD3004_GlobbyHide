@@ -194,6 +194,11 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 7432847}
   m_CullTransparentMesh: 1
+--- !u!1 &103309007 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 3899926565114627827, guid: 053f4251376a51a4e90ef3719d1c16cf, type: 3}
+  m_PrefabInstance: {fileID: 298349596}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1 &129942654
 GameObject:
   m_ObjectHideFlags: 0
@@ -491,7 +496,7 @@ Transform:
   m_GameObject: {fileID: 207281446}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 1.58, z: -10}
+  m_LocalPosition: {x: -0.025968855, y: 1.5799999, z: -10}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -780,6 +785,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: ---Player---
       objectReference: {fileID: 0}
+    - target: {fileID: 2688842022250209752, guid: 053f4251376a51a4e90ef3719d1c16cf, type: 3}
+      propertyPath: m_IsActive
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 4349119754887502116, guid: 053f4251376a51a4e90ef3719d1c16cf, type: 3}
       propertyPath: m_LocalPosition.x
       value: -0.03
@@ -820,6 +829,14 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 4512657037645584104, guid: 053f4251376a51a4e90ef3719d1c16cf, type: 3}
+      propertyPath: m_AnchorMax.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4512657037645584104, guid: 053f4251376a51a4e90ef3719d1c16cf, type: 3}
+      propertyPath: m_AnchorMax.y
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 5207918097438257471, guid: 053f4251376a51a4e90ef3719d1c16cf, type: 3}
       propertyPath: m_LocalScale.x
       value: 1
@@ -831,6 +848,26 @@ PrefabInstance:
     - target: {fileID: 5207918097438257471, guid: 053f4251376a51a4e90ef3719d1c16cf, type: 3}
       propertyPath: m_LocalScale.z
       value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 5207918097438257471, guid: 053f4251376a51a4e90ef3719d1c16cf, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 0.22
+      objectReference: {fileID: 0}
+    - target: {fileID: 5253885800880263244, guid: 053f4251376a51a4e90ef3719d1c16cf, type: 3}
+      propertyPath: m_BodyType
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8968264462522476852, guid: 053f4251376a51a4e90ef3719d1c16cf, type: 3}
+      propertyPath: m_AnchorMax.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8968264462522476852, guid: 053f4251376a51a4e90ef3719d1c16cf, type: 3}
+      propertyPath: m_AnchorMax.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8968264462522476852, guid: 053f4251376a51a4e90ef3719d1c16cf, type: 3}
+      propertyPath: m_AnchorMin.x
+      value: 0
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -1081,6 +1118,7 @@ MonoBehaviour:
   smashImpactSFX: {fileID: 8300000, guid: d157ded022b57d1409e278594b509f58, type: 3}
   sweepSFX: {fileID: 8300000, guid: d0e93b3aeadcf0c408348b043cc2ea6f, type: 3}
   audioSource: {fileID: 1985660003}
+  isDamaging: 0
 --- !u!61 &416091903
 BoxCollider2D:
   m_ObjectHideFlags: 0
@@ -1164,8 +1202,10 @@ MonoBehaviour:
   - {fileID: 1186734004}
   fullHeart: {fileID: 1564688358316481467, guid: 19fe4908fec4f4c4bba8afccb3b2a3aa, type: 3}
   emptyHeart: {fileID: 4537193172801868870, guid: 19fe4908fec4f4c4bba8afccb3b2a3aa, type: 3}
+  PlayerVisual: {fileID: 103309007}
   hurtSFX: {fileID: 8300000, guid: 0ea43963cebc1cf44bc523c90036c93d, type: 3}
   deathSFX: {fileID: 0}
+  laughSfx: {fileID: 8300000, guid: fcc63887dad508e439c7c9c484a7897d, type: 3}
   audioSource: {fileID: 1985660003}
 --- !u!1 &862234919
 GameObject:
@@ -1289,7 +1329,7 @@ BoxCollider2D:
   m_UsedByEffector: 0
   m_CompositeOperation: 0
   m_CompositeOrder: 0
-  m_Offset: {x: 0, y: 0}
+  m_Offset: {x: -0.0009866953, y: 0}
   m_SpriteTilingProperty:
     border: {x: 0, y: 0, z: 0, w: 0}
     pivot: {x: 0.5, y: 0.5}
@@ -1299,7 +1339,7 @@ BoxCollider2D:
     drawMode: 0
     adaptiveTiling: 0
   m_AutoTiling: 0
-  m_Size: {x: 1, y: 1}
+  m_Size: {x: 0.9703982, y: 1}
   m_EdgeRadius: 0
 --- !u!1 &958395312
 GameObject:
@@ -3666,7 +3706,7 @@ CompositeCollider2D:
   m_CompositeOperation: 0
   m_CompositeOrder: 0
   m_Offset: {x: 0, y: 0}
-  m_GeometryType: 0
+  m_GeometryType: 1
   m_GenerationType: 0
   m_EdgeRadius: 0
   m_ColliderPaths:
@@ -4065,6 +4105,7 @@ MonoBehaviour:
   smashImpactSFX: {fileID: 8300000, guid: d157ded022b57d1409e278594b509f58, type: 3}
   sweepSFX: {fileID: 8300000, guid: d0e93b3aeadcf0c408348b043cc2ea6f, type: 3}
   audioSource: {fileID: 1985660003}
+  isDamaging: 0
 --- !u!61 &1152847647
 BoxCollider2D:
   m_ObjectHideFlags: 0
@@ -4519,7 +4560,7 @@ SpriteRenderer:
   m_LightmapParameters: {fileID: 0}
   m_SortingLayerID: 0
   m_SortingLayer: 0
-  m_SortingOrder: 15
+  m_SortingOrder: 11
   m_Sprite: {fileID: 21300000, guid: 903af73e143ce264abba4145f34e9fea, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 0.8}
   m_FlipX: 0

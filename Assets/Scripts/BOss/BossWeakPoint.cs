@@ -57,7 +57,10 @@ public class BossWeakPoint : MonoBehaviour
                 // 3. Patlama Ýþlemleri
                 PopBalloon();
 
-                StartCoroutine(HideAfterAnimation());
+                if (this.gameObject != null) 
+                {
+                    StartCoroutine(HideAfterAnimation());
+                }
             }
         }
     }

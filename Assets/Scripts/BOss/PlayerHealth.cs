@@ -18,10 +18,12 @@ public class PlayerHealth : MonoBehaviour
     public Image[] heartImages; // Canvas'taki 3 kalp resmini buraya sürükle
     public Sprite fullHeart;    // Opsiyonel: Dolu kalp resmi
     public Sprite emptyHeart;   // Opsiyonel: Boþ kalp resmi
+    public GameObject PlayerVisual;
 
     [Header("--- Ses Efektleri (YENÝ) ---")]
     public AudioClip hurtSFX;
     public AudioClip deathSFX;
+    public AudioClip laughSfx;
     public AudioSource audioSource;
 
     // Bileþenler
@@ -117,9 +119,15 @@ public class PlayerHealth : MonoBehaviour
         }
 
         // Animasyon oynatabilirsin...
-        // ...
+        StartCoroutine(DieCorutine());
 
-        // Sahneyi Yenile
+    }
+
+    private IEnumerator DieCorutine() 
+    {
+        PlayerVisual.SetActive(false);
+        audioSource.PlayOneShot(laughSfx);
+        yield return new WaitForSeconds(3f);
         SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
     }
 
