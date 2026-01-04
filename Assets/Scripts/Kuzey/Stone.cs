@@ -14,6 +14,18 @@ public class Stone : MonoBehaviour
         col = GetComponent<Collider2D>();
     }
 
+    private void Update()
+    {
+        if (Camera.main != null)
+        {
+            // Kameranýn 25 birim altýna düþtü mü?
+            if (transform.position.y < Camera.main.transform.position.y - 25f)
+            {
+                Destroy(gameObject);
+            }
+        }
+    }
+
     public void Init(float size, float gravityScale = 1f)
     {
         transform.localScale = Vector3.one * size;
@@ -59,11 +71,5 @@ public class Stone : MonoBehaviour
             roundManager.OnGirlHit(this);
         else
             Debug.LogWarning("Stone: roundManager null, cannot notify girl hit.");
-    }
-
-    void OnBecameInvisible()
-    {
-        if (transform.position.y < Camera.main.transform.position.y - 25f && gameObject != null)
-            Destroy(gameObject);
     }
 }
